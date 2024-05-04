@@ -1,0 +1,5 @@
+typing-extensions
+tls_client
+requests
+httpx
+tqdm

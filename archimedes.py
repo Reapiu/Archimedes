@@ -6,6 +6,7 @@ import tls_client
 import httpx
 import json
 import time
+import random
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
@@ -84,7 +85,7 @@ def main():
 	print("Checking proxies...")
 
 	working_proxies = []
-	with ThreadPoolExecutor(max_workers=10) as executor:
+	with ThreadPoolExecutor(max_workers=100) as executor:
 		with tqdm(total=len(proxies)) as pbar:
 			results = executor.map(check_proxy, proxies)
 			for result in results:
@@ -98,44 +99,48 @@ def main():
 
 	session = tls_client.Session(client_identifier="safari_ios_16_0")
 
-	fingerprint = None
+	while True:
+	try:
+		fingerprint = None
 
-	ip, port = proxies.split(":")
-	proxy = f"http://{ip}:{port}"
+		proxy = random.choice(proxies)
 
-	session.proxies = {"http": proxy, "https": proxy}
+		ip, port = proxy.split(":")
+		proxy = f"http://{ip}:{port}"
 
-	headers = {'Accept': '*/*', 'Accept-Language': 'es-ES,es;q=0.9', 'Connection': 'keep-alive', 'Referer': 'https://discord.com/', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'Sec-GPC': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36', 'X-Track': 'eyJvcyI6IklPUyIsImJyb3dzZXIiOiJTYWZlIiwic3lzdGVtX2xvY2FsZSI6ImVuLUdCIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKElQaG9uZTsgQ1BVIEludGVybmFsIFByb2R1Y3RzIFN0b3JlLCBhcHBsaWNhdGlvbi8yMDUuMS4xNSAoS0hUTUwpIFZlcnNpb24vMTUuMCBNb2JpbGUvMTVFMjQ4IFNhZmFyaS82MDQuMSIsImJyb3dzZXJfdmVyc2lvbiI6IjE1LjAiLCJvc192IjoiIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfZG9tYWluX2Nvb2tpZSI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjk5OTksImNsaWVudF9ldmVudF9zb3VyY2UiOiJzdGFibGUiLCJjbGllbnRfZXZlbnRfc291cmNlIjoic3RhYmxlIn0'}
+		session.proxies = {"http": proxy, "https": proxy}
 
-	response = session.get('https://discord.com/api/v9/experiments', headers=headers)
-	if response.status_code == 200:
-		data = response.json()
-		fingerprint = data["fingerprint"]
-		with output_lock:
-			print(f"Obtained fingerprint {fingerprint}!")
-	else:
-		print("Failed to obtain fingerprint...")
+		headers = {'Accept': '*/*', 'Accept-Language': 'es-ES,es;q=0.9', 'Connection': 'keep-alive', 'Referer': 'https://discord.com/', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'Sec-GPC': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36', 'X-Track': 'eyJvcyI6IklPUyIsImJyb3dzZXIiOiJTYWZlIiwic3lzdGVtX2xvY2FsZSI6ImVuLUdCIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKElQaG9uZTsgQ1BVIEludGVybmFsIFByb2R1Y3RzIFN0b3JlLCBhcHBsaWNhdGlvbi8yMDUuMS4xNSAoS0hUTUwpIFZlcnNpb24vMTUuMCBNb2JpbGUvMTVFMjQ4IFNhZmFyaS82MDQuMSIsImJyb3dzZXJfdmVyc2lvbiI6IjE1LjAiLCJvc192IjoiIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfZG9tYWluX2Nvb2tpZSI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjk5OTksImNsaWVudF9ldmVudF9zb3VyY2UiOiJzdGFibGUiLCJjbGllbnRfZXZlbnRfc291cmNlIjoic3RhYmxlIn0'}
 
-	cap = solve_capmonster(site_key='4c672d35-0701-42b2-88c3-78380b0db560', page_url='https://discord.com/')
+		response = session.get('https://discord.com/api/v9/experiments', headers=headers)
+		if response.status_code == 200:
+			data = response.json()
+			fingerprint = data["fingerprint"]
+			with output_lock:
+				print(f"Obtained fingerprint {fingerprint}!")
+		else:
+			print("Failed to obtain fingerprint...")
 
-	payload = {'consent': True, 'global_name': "Ronnie McFloyd", 'unique_username_registration': True, 'fingerprint': fingerprint, 'captcha_key': cap, 'invite': invite}
+		cap = solve_capmonster(site_key='4c672d35-0701-42b2-88c3-78380b0db560', page_url='https://discord.com/')
 
-	headers = {'authority': 'discord.com', 'accept': '*/*', 'accept-language': 'es-ES,es;q=0.9', 'referer': 'https://discord.com/', 'origin': 'https://discord.com', 'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Brave";v="114"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Windows"', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'same-origin', 'sec-gpc': '1', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36', 'x-track': 'eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6ImZyLUZSIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzExNC4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTE0LjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjk5OTksImNsaWVudF9ldmVudF9zb3VyY2UiOm51bGx9', 'x-fingerprint': fingerprint}
+		payload = {'consent': True, 'global_name': "Ronnie McFloyd", 'unique_username_registration': True, 'fingerprint': fingerprint, 'captcha_key': cap, 'invite': invite}
 
-	response = session.post('https://discord.com/api/v9/auth/register', headers=headers, json=payload)
+		headers = {'authority': 'discord.com', 'accept': '*/*', 'accept-language': 'es-ES,es;q=0.9', 'referer': 'https://discord.com/', 'origin': 'https://discord.com', 'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Brave";v="114"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Windows"', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'same-origin', 'sec-gpc': '1', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36', 'x-track': 'eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6ImZyLUZSIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzExNC4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTE0LjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjk5OTksImNsaWVudF9ldmVudF9zb3VyY2UiOm51bGx9', 'x-fingerprint': fingerprint}
 
-	if "token" not in response.text:
-		if "retry_after" in response.text:
-			print("Could not generate token due to ratelimit.")
-	token = response.json().get('token')
-	if token == None:
-		print("Token failed to generate, token not found!")
-	else:
-		with open("tokens.txt", "w", encoding='utf-8') as f:
-			f.write(token + "\n")
-		print(f"Successfully generated token {token}!")
+		response = session.post('https://discord.com/api/v9/auth/register', headers=headers, json=payload)
+
+		if "token" not in response.text:
+			if "retry_after" in response.text:
+				print("Could not generate token due to ratelimit.")
+		token = response.json().get('token')
+		if token == None:
+			print("Token failed to generate, token not found!")
+		else:
+			with open("tokens.txt", "w", encoding='utf-8') as f:
+				f.write(token + "\n")
+			print(f"Successfully generated token {token}!")
+	except Exception as e:
+		print(f"Encountered exception ({str(e)})!")
 
 if __name__ == "__main__":
 	main()
-
-Make it so that it selects a random proxy from the working proxies
